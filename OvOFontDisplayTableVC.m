@@ -8,16 +8,19 @@
 
 #import "OvOFontDisplayTableVC.h"
 
-@interface OvOFontDisplayTableVC ()
+@interface OvOFontFamily : NSObject
+@property (nonatomic, strong) NSArray * fonts;
+@property (nonatomic, strong) NSString * name;
+@end
 
+@implementation OvOFontFamily
+@end
+
+@interface OvOFontDisplayTableVC ()
 // system-supported fonts info
 @property NSMutableArray * systemFontFamiliesArray;
-@property NSMutableArray * systemFontNamesArray;
-@property NSMutableArray * allFonts;
-
-// search result
-@property NSArray * filteredFonts;
-
+// array for display
+@property NSMutableArray * displayArray;
 @end
 
 @implementation OvOFontDisplayTableVC
@@ -26,56 +29,56 @@
 
 - (void)awakeFromNib
 {
-    self.systemFontFamiliesArray = [[UIFont familyNames] mutableCopy];
-    self.systemFontNamesArray = [NSMutableArray new];
     NSUInteger * totalCount = 0;
+    self.systemFontFamiliesArray = [NSMutableArray new];
     
-    for (NSString * familyName in self.systemFontFamiliesArray)
+    for (NSString * name in [UIFont familyNames])
     {
-        NSArray * fontNames = [UIFont fontNamesForFamilyName:familyName];
-        if (!fontNames)
-        {
-            fontNames = [NSArray new];
-        }
-        [self.systemFontNamesArray addObject:fontNames];
+        OvOFontFamily * family = [OvOFontFamily new];
+        family.name = name;
+        family.fonts = [UIFont fontNamesForFamilyName:name];
+    
+        [self.systemFontFamiliesArray addObject: family];
         
-        [self.allFonts addObjectsFromArray:fontNames];
-        
-        totalCount += fontNames.count;
+        totalCount += family.fonts.count;
     }
     
-    [self.allFonts sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-    
-    self.filteredFonts = [[NSMutableArray alloc] initWithCapacity:self.systemFontNamesArray.count];
+    self.displayArray = [self.systemFontFamiliesArray copy];
     
     self.title = [NSString stringWithFormat:@"System Supported Fonts (%ld)",(long)totalCount];
+    
+    // Hide the search bar until user scrolls up
+    CGRect newBounds = [[self tableView] bounds];
+    newBounds.origin.y = newBounds.origin.y + self.searchBar.bounds.size.height;
+    [[self tableView] setBounds:newBounds];
 }
 
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    NSArray * fontNames = self.systemFontNamesArray[section];
-    return fontNames.count;
+    OvOFontFamily * family = self.displayArray[section];
+    return family.fonts.count;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return self.systemFontFamiliesArray.count;
+    return self.displayArray.count;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-    NSArray * fontNames = self.systemFontNamesArray[section];
-    return [NSString stringWithFormat:@"%@ (%ld)",self.systemFontFamiliesArray[section],(long)fontNames.count];
+    OvOFontFamily * family = self.displayArray[section];
+    return [NSString stringWithFormat:@"%@ (%ld)",family.name,(long)family.fonts.count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell * cell = [tableView dequeueReusableCellWithIdentifier:@"fontCell" forIndexPath:indexPath];
     
-    NSArray * fontNames = self.systemFontNamesArray[indexPath.section];
-    NSString * fontName = fontNames[indexPath.row];
+    OvOFontFamily * family = self.displayArray[indexPath.section];
+
+    NSString * fontName = family.fonts[indexPath.row];
     
     cell.textLabel.font = [UIFont fontWithName:fontName size:20];
     cell.textLabel.text = fontName;
@@ -83,12 +86,19 @@
     return cell;
 }
 
+#pragma mark - UITableViewDelegate
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
 #pragma mark - helper method
 - (void)filteredArray:(NSString*)searchStr
 {
-    self.filteredFonts = nil;
-    NSPredicate * predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",searchStr];
-    self.filteredFonts = [self.allFonts filteredArrayUsingPredicate:predicate];
+//    self.filteredFonts = nil;
+//    NSPredicate * predicate = [NSPredicate predicateWithFormat:@"SELF contains[cd] %@",searchStr];
+//    self.filteredFonts = [self.allFonts filteredArrayUsingPredicate:predicate];
 }
 
 @end
