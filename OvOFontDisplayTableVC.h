@@ -8,7 +8,5 @@
 
 #import <UIKit/UIKit.h>
 
-@interface OvOFontDisplayTableVC : UITableViewController<UISearchBarDelegate, UISearchDisplayDelegate>
-@property (weak, nonatomic) IBOutlet UISearchBar *searchBar;
-
+@interface OvOFontDisplayTableVC : UITableViewController
 @end
