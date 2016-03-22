@@ -121,7 +121,6 @@
 {
     NSString *searchString = searchController.searchBar.text;
     [self searchForText:searchString];
-    [self.tableView reloadData];
 }
 
 #pragma mark - helper
@@ -159,6 +158,8 @@
     }
     else
         self.displayArray = self.systemFontFamiliesArray;
+    
+    [self.tableView reloadData];
 }
 
 - (void)sortFamilysMyName:(NSMutableArray*)mutableArray
